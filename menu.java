@@ -3,9 +3,12 @@ import java.util.Scanner;
 public class menu {
 
     private Scanner scanner;
+    private ArrayList<Account> accounts;
+
 
     public menu(Scanner scanner) {
         this.scanner = scanner;
+        this.accounts = FileManager.loadAccounts();
     }
 
     public void showMainMenu() {
@@ -38,9 +41,11 @@ public class menu {
         System.out.print("Enter PIN: ");
         String pin = scanner.next();
 
-        System.out.println("Login successful!");
-
-        showUserMenu(accNum);
+        Account acc = findAccount(accNum);
+        if ( acc.pin.equals(pin)) {
+            System.out.println("Login successful!");
+            showUserMenu(acc);
+        }
     }
 
     private void adminLogin() {
@@ -50,12 +55,14 @@ public class menu {
         System.out.print("Enter Admin PIN: ");
         String pin = scanner.next();
 
-        System.out.println("Admin login successful!");
+       if (id.equals("admin") && pin.equals("1234")) {
+            System.out.println("Admin login successful!");
+            showAdminMenu();
+        }
 
-        showAdminMenu();
     }
 
-    private void showUserMenu(String accNum) {
+    private void showUserMenu(Account acc) {
         while (true) {
             System.out.println("\n=== USER MENU ===");
             System.out.println("1. Check Balance");
@@ -75,9 +82,7 @@ public class menu {
             } else if (choice == 4) {
                 System.out.println("Logging out...");
                 return;
-            } else {
-                System.out.println("Invalid option.");
-            }
+            } 
         }
     }
 
@@ -107,61 +112,82 @@ public class menu {
         }
     }
 
-private void checkBalance(String accNum) {
-        System.out.println("Checking balance for account: " + accNum);
+    private void checkBalance(Account acc) {
+        System.out.println("Balance: $" + acc.balance);
     }
 
-    private void deposit(String accNum) {
-        System.out.print("Enter amount to deposit: ");
+    private void deposit(Account acc) {
+        System.out.print("Amount: ");
         double amount = scanner.nextDouble();
-        System.out.println("Deposited $" + amount);
+        acc.balance += amount;
+        FileManager.saveAccounts(accounts);
+        System.out.println("New Balance: $" + acc.balance);
     }
 
-    private void withdraw(String accNum) {
-        System.out.print("Enter amount to withdraw: ");
+    private void withdraw(Account acc) {
+        System.out.print("Amount: ");
         double amount = scanner.nextDouble();
-        System.out.println("Withdrew $" + amount);
-    }
 
+        if (amount > acc.balance) {
+            System.out.println("Insufficient funds.");
+        } else {
+            acc.balance -= amount;
+            FileManager.saveAccounts(accounts);
+            System.out.println("New Balance: $" + acc.balance);
+        }
+    }
     
 
-    private void openAccount() {
-        System.out.print("Enter new account name: ");
+        private void openAccount() {
+        System.out.print("Account Number: ");
+        String num = scanner.next();
+
+        System.out.print("Name: ");
         String name = scanner.next();
 
-        System.out.print("Enter initial deposit: ");
-        double deposit = scanner.nextDouble();
+        System.out.print("PIN: ");
+        String pin = scanner.next();
 
-        System.out.println("Account created for " + name);
+        accounts.add(new Account(num, pin, 0, name));
+        FileManager.saveAccounts(accounts);
+
+        System.out.println("Account created.");
     }
 
     private void closeAccount() {
-        System.out.print("Enter account number to close: ");
-        String accNum = scanner.next();
+        System.out.print("Account Number: ");
+        String num = scanner.next();
 
-        System.out.println("Account " + accNum + " closed.");
+        Account acc = findAccount(num);
+
+        if (acc != null) {
+            accounts.remove(acc);
+            FileManager.saveAccounts(accounts);
+            System.out.println("Account closed.");
+        }
     }
+
 
     private void modifyAccount() {
         System.out.print("Enter account number to modify: ");
         String accNum = scanner.next();
 
-        System.out.println("Modifying account " + accNum);
+        Account acc = findAccount(num);
+
         System.out.println("1. Change Name");
         System.out.println("2. Change PIN");
 
         int choice = scanner.nextInt();
 
         if (choice == 1) {
-            System.out.print("Enter new name: ");
-            String name = scanner.next();
-            System.out.println("Name updated to " + name);
+            System.out.print("New Name: ");
+            acc.name = scanner.next();
         } else if (choice == 2) {
-            System.out.print("Enter new PIN: ");
-            String pin = scanner.next();
-            System.out.println("PIN updated.");
-        } else {
-            System.out.println("Invalid option.");
+            System.out.print("New PIN: ");
+            acc.pin = scanner.next();
         }
+
+        FileManager.saveAccounts(accounts);
+        System.out.println("Account updated.");
     }
 }
