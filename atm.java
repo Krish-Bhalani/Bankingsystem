@@ -6,5 +6,6 @@ public class atm {
         Menu menu = new Menu(scanner);
 
         menu.showMainMenu();
+        //file used to run the program and show menu to user
     }
 }

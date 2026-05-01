@@ -1,144 +1,117 @@
 import java.util.Scanner;
 
-public class menu {
+public class Menu {
 
     private Scanner scanner;
-    private ArrayList<Account> accounts;
 
-
-    public menu(Scanner scanner) {
+    public Menu(Scanner scanner) {
         this.scanner = scanner;
-        this.accounts = FileManager.loadAccounts();
     }
 
     public void showMainMenu() {
         while (true) {
             System.out.println("\n=== ATM SYSTEM ===");
             System.out.println("1. Account Holder");
-            System.out.println("2. Bank Administrator");
+            System.out.println("2. Admin");
             System.out.println("3. Exit");
-            System.out.print("Select option: ");
-
+//ask for user for what they want and then call proper function based on need
             int choice = scanner.nextInt();
 
-            if (choice == 1) {
-                userLogin();
-            } else if (choice == 2) {
-                adminLogin();
-            } else if (choice == 3) {
-                System.out.println("Goodbye!");
-                System.exit(0);
-            } else {
-                System.out.println("Invalid option.");
-            }
+            if (choice == 1) userLogin();
+            else if (choice == 2) adminLogin();
+            else if (choice == 3) System.exit(0);
         }
     }
 
     private void userLogin() {
-        System.out.print("\nEnter Account Number: ");
+        //ask details for account to retrieve details from database and ensure correct login
+        System.out.print("Account Number: ");
         String accNum = scanner.next();
 
-        System.out.print("Enter PIN: ");
+        System.out.print("PIN: ");
         String pin = scanner.next();
 
-        Account acc = findAccount(accNum);
-        if ( acc.pin.equals(pin)) {
-            System.out.println("Login successful!");
+        Account acc = DatabaseManager.getAccount(accNum);
+
+        if (acc != null && acc.pin.equals(pin)) {
             showUserMenu(acc);
+        } else {
+            System.out.println("Invalid login.");
         }
-    }
-
-    private void adminLogin() {
-        System.out.print("\nEnter Admin ID: ");
-        String adminId = scanner.next();
-
-        System.out.print("Enter Admin PIN: ");
-        String pin = scanner.next();
-
-       if (id.equals("admin") && pin.equals("1234")) {
-            System.out.println("Admin login successful!");
-            showAdminMenu();
-        }
-
     }
 
     private void showUserMenu(Account acc) {
+        //menu for when user is logged in
         while (true) {
-            System.out.println("\n=== USER MENU ===");
-            System.out.println("1. Check Balance");
+            System.out.println("\n1. Check Balance");
             System.out.println("2. Deposit");
             System.out.println("3. Withdraw");
             System.out.println("4. Logout");
-            System.out.print("Choose option: ");
 
             int choice = scanner.nextInt();
 
             if (choice == 1) {
-                checkBalance(accNum);
-            } else if (choice == 2) {
-                deposit(accNum);
-            } else if (choice == 3) {
-                withdraw(accNum);
-            } else if (choice == 4) {
-                System.out.println("Logging out...");
-                return;
-            } 
+                System.out.println("Balance: $" + acc.balance);
+            }
+
+            else if (choice == 2) {
+                System.out.print("Amount: ");
+                double amt = scanner.nextDouble();
+                acc.balance += amt;
+                DatabaseManager.updateBalance(acc.accountNumber, acc.balance);
+            }
+
+            else if (choice == 3) {
+                System.out.print("Amount: ");
+                double amt = scanner.nextDouble();
+
+                if (amt > acc.balance) {
+                    System.out.println("Insufficient funds.");
+                } else {
+                    acc.balance -= amt;
+                    DatabaseManager.updateBalance(acc.accountNumber, acc.balance);
+                }
+            }
+
+            else if (choice == 4) return;
+        }
+    }
+
+    private void adminLogin() {
+        //this is for admin login where it ensures admin is true and then shows page
+        System.out.print("Admin ID: ");
+        String id = scanner.next();
+
+        System.out.print("PIN: ");
+        String pin = scanner.next();
+        Account acc = DatabaseManager.getAccount(id);
+
+        if (acc != null && acc.pin.equals(pin)) {
+            showAdminMenu();
+        } else {
+            System.out.println("Invalid admin login.");
         }
     }
 
     private void showAdminMenu() {
         while (true) {
-            System.out.println("\n=== ADMIN MENU ===");
-            System.out.println("1. Open Account");
+            //shows admin options
+            System.out.println("\n1. Open Account");
             System.out.println("2. Close Account");
             System.out.println("3. Modify Account");
             System.out.println("4. Logout");
-            System.out.print("Choose option: ");
 
             int choice = scanner.nextInt();
 
-            if (choice == 1) {
-                openAccount();
-            } else if (choice == 2) {
-                closeAccount();
-            } else if (choice == 3) {
-                modifyAccount();
-            } else if (choice == 4) {
-                System.out.println("Logging out...");
-                return;
-            } else {
-                System.out.println("Invalid option.");
-            }
+            if (choice == 1) openAccount();
+            else if (choice == 2) closeAccount();
+            else if (choice == 3) modifyAccount();
+            else if (choice == 4) return;
         }
     }
 
-    private void checkBalance(Account acc) {
-        System.out.println("Balance: $" + acc.balance);
-    }
-
-    private void deposit(Account acc) {
-        System.out.print("Amount: ");
-        double amount = scanner.nextDouble();
-        acc.balance += amount;
-        FileManager.saveAccounts(accounts);
-        System.out.println("New Balance: $" + acc.balance);
-    }
-
-    private void withdraw(Account acc) {
-        System.out.print("Amount: ");
-        double amount = scanner.nextDouble();
-
-        if (amount > acc.balance) {
-            System.out.println("Insufficient funds.");
-        } else {
-            acc.balance -= amount;
-            FileManager.saveAccounts(accounts);
-            System.out.println("New Balance: $" + acc.balance);
-        }
-    }
-    
-
-        private void openAccount() {
+    private void openAccount() {
+        //allows to create new account
         System.out.print("Account Number: ");
         String num = scanner.next();
 
@@ -147,32 +120,23 @@ public class menu {
 
         System.out.print("PIN: ");
         String pin = scanner.next();
-
-        accounts.add(new Account(num, pin, 0, name));
-        FileManager.saveAccounts(accounts);
-
+//ensures balance is 0
+        DatabaseManager.createAccount(new Account(num, pin, 0, name));
         System.out.println("Account created.");
     }
-
+//delete exisisting account
     private void closeAccount() {
         System.out.print("Account Number: ");
         String num = scanner.next();
 
-        Account acc = findAccount(num);
-
-        if (acc != null) {
-            accounts.remove(acc);
-            FileManager.saveAccounts(accounts);
-            System.out.println("Account closed.");
-        }
+        DatabaseManager.deleteAccount(num);
+        System.out.println("Account deleted.");
     }
 
-
+//changes to exisiting account
     private void modifyAccount() {
-        System.out.print("Enter account number to modify: ");
-        String accNum = scanner.next();
-
-        Account acc = findAccount(num);
+        System.out.print("Account Number: ");
+        String num = scanner.next();
 
         System.out.println("1. Change Name");
         System.out.println("2. Change PIN");
@@ -181,13 +145,16 @@ public class menu {
 
         if (choice == 1) {
             System.out.print("New Name: ");
-            acc.name = scanner.next();
-        } else if (choice == 2) {
-            System.out.print("New PIN: ");
-            acc.pin = scanner.next();
+            String name = scanner.next();
+            DatabaseManager.updateName(num, name);
         }
 
-        FileManager.saveAccounts(accounts);
-        System.out.println("Account updated.");
+        else if (choice == 2) {
+            System.out.print("New PIN: ");
+            String pin = scanner.next();
+            DatabaseManager.updatePin(num, pin);
+        }
     }
 }
+
+//all functions are connected to main where the sql queries are called to update the database based on user input and changes to accounts

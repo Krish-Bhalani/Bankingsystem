@@ -14,4 +14,5 @@ public class Account {
     public String toFileString() {
         return accountNumber + "," + pin + "," + balance + "," + name;
     }
-}
+
+    //this class is used to create account objects and store account information such as account number, pin, balance, and name
